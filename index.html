@@ -58,10 +58,18 @@
   #home{
     display:flex;
     flex-direction:column;
+    padding:0;
+  }
+  .home-content{
+    flex:1;
+    display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     text-align:center;
-    padding:30px;
+    padding:20px 30px;
+    position:relative;
+    z-index:2;
   }
   .home-eyebrow{
     font-family:'Fredoka One',cursive;
@@ -98,11 +106,31 @@
     margin-top:6px;
   }
   .startbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #37793F;}
+  .home-hills-wrap{
+    position:relative;
+    height:35%;
+    flex-shrink:0;
+    z-index:1;
+  }
   .home-hills{
     position:absolute;
     bottom:0;left:0;right:0;
-    height:35%;
+    width:100%;
+    height:100%;
     z-index:0;
+    display:block;
+  }
+  .home-character{
+    position:absolute;
+    bottom:38%;
+    left:11%;
+    width:92px;
+    z-index:2;
+    animation:homeIdle 2.4s ease-in-out infinite;
+  }
+  @keyframes homeIdle{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-4px); }
   }
 
   /* ---------- HIKE ---------- */
@@ -633,16 +661,19 @@
 
   <!-- HOME -->
   <div class="screen active" id="home">
-    <svg class="home-hills" viewBox="0 0 400 140" preserveAspectRatio="none">
-      <path d="M0 140 L0 90 L80 40 L160 90 L240 30 L320 80 L400 50 L400 140 Z" fill="var(--hill-far)"/>
-      <path d="M0 140 L0 110 L100 65 L200 110 L300 55 L400 100 L400 140 Z" fill="var(--hill-mid)"/>
-      <path d="M0 140 L0 125 L120 95 L220 130 L320 90 L400 120 L400 140 Z" fill="var(--hill-near)"/>
-    </svg>
-    <div style="position:relative;z-index:2;">
+    <div class="home-content">
       <div class="home-eyebrow">Lessons 1&ndash;16</div>
       <div class="home-title">The Machine Learning<br/>Trail</div>
       <div class="home-sub">One journey. Four summits.</div>
       <button class="startbtn" id="startBtn">Begin the Hike</button>
+    </div>
+    <div class="home-hills-wrap">
+      <svg class="home-hills" viewBox="0 0 400 140" preserveAspectRatio="none">
+        <path d="M0 140 L0 90 L80 40 L160 90 L240 30 L320 80 L400 50 L400 140 Z" fill="var(--hill-far)"/>
+        <path d="M0 140 L0 110 L100 65 L200 110 L300 55 L400 100 L400 140 Z" fill="var(--hill-mid)"/>
+        <path d="M0 140 L0 125 L120 95 L220 130 L320 90 L400 120 L400 140 Z" fill="var(--hill-near)"/>
+      </svg>
+      <div class="home-character" id="homeCharacter"></div>
     </div>
   </div>
 
@@ -810,9 +841,9 @@
   var activeCheckpointIndex = -1;
   var hintTimeout = null;
 
-  function buildCharacterSVG(){
+  function characterSVGMarkup(withFlipId){
     var html = '';
-    html += '<div id="charFlip" style="width:100%;">';
+    html += '<div' + (withFlipId ? ' id="charFlip"' : '') + ' style="width:100%;">';
     html += '<svg viewBox="0 0 88 130" width="100%" xmlns="http://www.w3.org/2000/svg">';
     html += '<ellipse cx="44" cy="122" rx="24" ry="6" fill="rgba(0,0,0,0.15)"/>';
     html += '<rect class="arm right" x="24" y="46" width="9" height="34" rx="4.5" fill="#F2A65A" transform="rotate(10 28 46)"/>';
@@ -829,8 +860,14 @@
     html += '<rect x="26" y="8" width="36" height="7" rx="3.5" fill="#D9793F"/>';
     html += '</svg>';
     html += '</div>';
-    character.innerHTML = html;
+    return html;
+  }
+
+  function buildCharacterSVG(){
+    character.innerHTML = characterSVGMarkup(true);
     charFlip = document.getElementById('charFlip');
+    var homeCharacter = document.getElementById('homeCharacter');
+    if (homeCharacter){ homeCharacter.innerHTML = characterSVGMarkup(false); }
   }
 
   function buildTrail(){
