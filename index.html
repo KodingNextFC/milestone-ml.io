@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Machine Learning Trail</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky1:#BEE3F8;
+    --sky2:#EAF6FF;
+    --hill-far:#9FCB9A;
+    --hill-mid:#7FB877;
+    --hill-near:#5FA157;
+    --trail:#B08554;
+    --trail-dark:#8C6A42;
+    --ink:#2A2118;
+    --sub:#6B6455;
+    --card:#FFFFFF;
+    --sup:#4F8EF7;
+    --uns:#9B7BF5;
+    --nlp:#FF9257;
+    --cv:#22C1B8;
+    --gold:#FFC94A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Nunito',sans-serif;
+    color:var(--ink);
+    height:100vh;
+    height:100dvh;
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+    background:var(--sky2);
+  }
+  #app{
+    position:relative;
+    width:100%;
+    height:100%;
+    max-width:960px;
+    margin:0 auto;
+    overflow:hidden;
+    background:linear-gradient(to bottom, var(--sky1) 0%, var(--sky2) 60%);
+  }
+
+  .screen{
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity .4s ease;
+  }
+  .screen.active{visibility:visible;opacity:1;z-index:5;}
+
+  /* ---------- HOME ---------- */
+  #home{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:30px;
+  }
+  .home-eyebrow{
+    font-family:'Fredoka One',cursive;
+    font-size:13px;
+    letter-spacing:3px;
+    color:var(--sub);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .home-title{
+    font-family:'Fredoka One',cursive;
+    font-size:32px;
+    line-height:1.2;
+    margin:0 0 10px 0;
+    color:var(--ink);
+  }
+  .home-sub{
+    font-size:15px;
+    font-weight:800;
+    color:var(--sub);
+    margin-bottom:26px;
+  }
+  .startbtn{
+    font-family:'Fredoka One',cursive;
+    font-size:19px;
+    color:#fff;
+    background:#4C9A5B;
+    border:none;
+    padding:15px 40px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 6px 0 #37793F;
+    transition:transform .12s ease;
+    margin-top:6px;
+  }
+  .startbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #37793F;}
+  .home-hills{
+    position:absolute;
+    bottom:0;left:0;right:0;
+    height:35%;
+    z-index:0;
+  }
+
+  /* ---------- HIKE ---------- */
+  #hike{overflow:hidden;}
+  #trailArea{
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+  }
+  .hillsvg{
+    position:absolute;
+    bottom:0;left:0;width:100%;
+    z-index:1;
+    pointer-events:none;
+  }
+  .trail-segment{
+    position:absolute;
+    height:10px;
+    border-radius:6px;
+    background:repeating-linear-gradient(90deg, var(--trail) 0 16px, var(--trail-dark) 16px 20px);
+    box-shadow:0 3px 0 rgba(0,0,0,0.12);
+    z-index:3;
+  }
+  .flag{
+    position:absolute;
+    width:38px;height:38px;
+    transform:translate(-50%,-100%);
+    z-index:6;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .flag-pole{
+    position:absolute;
+    bottom:-4px;left:50%;
+    width:4px;height:52px;
+    background:#7A6A52;
+    transform:translateX(-50%);
+    border-radius:2px;
+    z-index:-1;
+  }
+  .flag-flame{
+    width:38px;height:38px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:3px solid #fff;
+    font-family:'Fredoka One',cursive;
+    color:#fff;
+    font-size:15px;
+  }
+  .flag.done .flag-flame{background:#4C9A5B !important;}
+  .flag.locked .flag-flame{opacity:.55;}
+
+  .summit-flag{
+    position:absolute;
+    width:46px;height:60px;
+    transform:translate(-50%,-100%);
+    z-index:6;
+  }
+
+  #character{
+    position:absolute;
+    width:96px;
+    transform:translate(-50%,-96%);
+    z-index:7;
+    transition:left .05s linear, top .05s linear;
+  }
+  #charFlip{ transform-origin:center bottom; }
+  .leg, .arm{ transform-box: fill-box; transform-origin: 50% 0%; }
+  #character.walking .leg.left{ animation:swingL .38s ease-in-out infinite; }
+  #character.walking .leg.right{ animation:swingR .38s ease-in-out infinite; }
+  #character.walking .arm.left{ animation:swingR .38s ease-in-out infinite; }
+  #character.walking .arm.right{ animation:swingL .38s ease-in-out infinite; }
+  @keyframes swingL{ 0%,100%{transform:rotate(-16deg);} 50%{transform:rotate(16deg);} }
+  @keyframes swingR{ 0%,100%{transform:rotate(16deg);} 50%{transform:rotate(-16deg);} }
+
+  /* ---------- HUD ---------- */
+  #hud{
+    position:absolute;
+    top:14px; left:14px; right:14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    z-index:40;
+  }
+  .homebtn{
+    width:42px;height:42px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.85);
+    border:none;
+    box-shadow:0 3px 8px rgba(0,0,0,0.15);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  #badges{
+    display:flex;
+    gap:8px;
+    background:rgba(255,255,255,0.85);
+    padding:7px 10px;
+    border-radius:999px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.15);
+  }
+  .badge{
+    width:22px;height:22px;
+    border-radius:50%;
+    border:2px solid #fff;
+    box-shadow:0 0 0 1.5px rgba(0,0,0,0.08);
+    opacity:.4;
+  }
+  .badge.done{opacity:1;}
+
+  #progressWrap{
+    position:absolute;
+    top:60px; left:14px; right:14px;
+    z-index:40;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  #progressBarBg{
+    flex:1;
+    height:8px;
+    background:rgba(255,255,255,0.6);
+    border-radius:999px;
+    overflow:hidden;
+  }
+  #progressBarFg{
+    height:100%;
+    width:0%;
+    background:var(--gold);
+    border-radius:999px;
+    transition:width .1s linear;
+  }
+  #progressLabel{
+    font-size:11px;
+    font-weight:800;
+    color:var(--ink);
+    background:rgba(255,255,255,0.85);
+    padding:4px 9px;
+    border-radius:999px;
+  }
+
+  /* ---------- CONTROLS ---------- */
+  #controls{
+    position:absolute;
+    bottom:18px; left:0; right:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:16px;
+    z-index:40;
+  }
+  .walkbtn{
+    width:64px;height:64px;
+    border-radius:50%;
+    border:none;
+    background:#fff;
+    box-shadow:0 5px 14px rgba(0,0,0,0.22);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    -webkit-user-select:none;
+    user-select:none;
+    touch-action:manipulation;
+  }
+  .walkbtn:active{transform:scale(0.94);}
+  #hintText{
+    position:absolute;
+    bottom:92px; left:0; right:0;
+    text-align:center;
+    font-size:11.5px;
+    font-weight:800;
+    color:var(--sub);
+    letter-spacing:.4px;
+    z-index:40;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  #hintText.show{visibility:visible;opacity:1;}
+
+  /* ---------- CHECKPOINT MODAL ---------- */
+  #modalOverlay{
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    background:rgba(20,24,20,0.5);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:80;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity .3s ease;
+    padding:20px;
+  }
+  #modalOverlay.show{visibility:visible;opacity:1;}
+  .modal-card{
+    background:#fff;
+    border-radius:20px;
+    padding:26px 24px;
+    max-width:440px;
+    width:100%;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);
+    text-align:left;
+    transform:translateY(16px);
+    transition:transform .3s ease;
+  }
+  #modalOverlay.show .modal-card{transform:translateY(0);}
+  .modal-eyebrow{
+    font-family:'Fredoka One',cursive;
+    font-size:12px;
+    letter-spacing:1.5px;
+    color:#fff;
+    padding:6px 14px;
+    border-radius:999px;
+    display:inline-block;
+    text-transform:uppercase;
+    margin-bottom:12px;
+  }
+  .modal-title{
+    font-family:'Fredoka One',cursive;
+    font-size:22px;
+    margin:0 0 10px 0;
+    color:var(--ink);
+  }
+  .modal-explain{
+    font-size:14.5px;
+    line-height:1.6;
+    color:var(--ink);
+    margin-bottom:16px;
+  }
+  .modal-prompt{
+    font-size:13px;
+    font-weight:800;
+    color:var(--sub);
+    margin-bottom:8px;
+  }
+  #modalTextarea{
+    width:100%;
+    min-height:90px;
+    border-radius:12px;
+    border:2px solid #E5E9F0;
+    padding:12px 14px;
+    font-family:'Nunito',sans-serif;
+    font-size:14px;
+    resize:vertical;
+    outline:none;
+  }
+  #modalTextarea:focus{border-color:var(--gold);}
+  .modal-warn{
+    font-size:12px;
+    color:#D9534F;
+    font-weight:800;
+    margin-top:6px;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+  .modal-warn.show{visibility:visible;opacity:1;}
+  .modal-savebtn{
+    font-family:'Fredoka One',cursive;
+    font-size:15px;
+    color:#fff;
+    background:#4C9A5B;
+    border:none;
+    padding:12px 28px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 5px 0 #37793F;
+    margin-top:16px;
+  }
+  .modal-savebtn:active{transform:translateY(3px);box-shadow:0 2px 0 #37793F;}
+
+  /* ---------- SUMMIT ---------- */
+  #summitOverlay{
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    background:rgba(20,24,20,0.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:90;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity .4s ease;
+    padding:20px;
+    overflow-y:auto;
+  }
+  #summitOverlay.show{visibility:visible;opacity:1;}
+  .summit-card{
+    background:#fff;
+    border-radius:20px;
+    padding:30px 26px;
+    max-width:480px;
+    width:100%;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    text-align:center;
+    max-height:90%;
+    overflow-y:auto;
+  }
+  .summit-title{
+    font-family:'Fredoka One',cursive;
+    font-size:24px;
+    margin:8px 0 4px 0;
+  }
+  .summit-sub{
+    font-size:13.5px;
+    font-weight:800;
+    color:var(--sub);
+    margin-bottom:20px;
+  }
+  .journal-item{
+    text-align:left;
+    background:#F7F9FC;
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:10px;
+    border-left:5px solid var(--gold);
+  }
+  .journal-topic{
+    font-family:'Fredoka One',cursive;
+    font-size:13px;
+    margin-bottom:4px;
+  }
+  .journal-answer{
+    font-size:13px;
+    line-height:1.5;
+    color:var(--ink);
+  }
+  .restartbtn{
+    font-family:'Fredoka One',cursive;
+    font-size:15px;
+    color:var(--ink);
+    background:var(--gold);
+    border:none;
+    padding:12px 26px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 5px 0 #D9A93A;
+    margin-top:16px;
+  }
+  .restartbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #D9A93A;}
+  .claimbtn{
+    font-family:'Fredoka One',cursive;
+    font-size:15px;
+    color:#fff;
+    background:#4F8EF7;
+    border:none;
+    padding:12px 26px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 5px 0 #3A6BC4;
+    margin-top:16px;
+    margin-right:8px;
+  }
+  .claimbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #3A6BC4;}
+
+  /* ---------- ACHIEVEMENT / BADGE SCREEN ---------- */
+  #achieveOverlay{
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    background:rgba(20,24,20,0.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:95;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity .4s ease;
+    padding:20px;
+    overflow-y:auto;
+  }
+  #achieveOverlay.show{visibility:visible;opacity:1;}
+  .confetti-piece{
+    position:absolute;
+    top:-20px;
+    width:8px;height:14px;
+    opacity:0.9;
+    border-radius:2px;
+    animation:confettiFall linear forwards;
+    z-index:96;
+  }
+  @keyframes confettiFall{
+    0%{ transform:translateY(0) rotate(0deg); opacity:1; }
+    100%{ transform:translateY(720px) rotate(540deg); opacity:0.2; }
+  }
+  .badge-card{
+    position:relative;
+    background:#FFFDF5;
+    border-radius:18px;
+    padding:30px 28px 26px 28px;
+    max-width:460px;
+    width:100%;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    text-align:center;
+    border:4px dashed var(--gold);
+    max-height:90%;
+    overflow-y:auto;
+  }
+  .badge-seal{
+    width:64px;height:64px;
+    border-radius:50%;
+    background:linear-gradient(145deg, #FFD866, #F0A93A);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 10px auto;
+    box-shadow:0 5px 12px rgba(0,0,0,0.2), inset 0 -3px 6px rgba(0,0,0,0.15);
+    font-size:28px;
+  }
+  .badge-heading{
+    font-family:'Fredoka One',cursive;
+    font-size:22px;
+    color:var(--ink);
+    margin:0 0 2px 0;
+    letter-spacing:.5px;
+  }
+  .badge-subheading{
+    font-size:12.5px;
+    font-weight:800;
+    color:var(--sub);
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    margin-bottom:18px;
+  }
+  .badge-name-row{
+    margin-bottom:16px;
+  }
+  .badge-name-label{
+    font-size:11.5px;
+    font-weight:800;
+    color:var(--sub);
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  #badgeNameInput{
+    font-family:'Fredoka One',cursive;
+    font-size:19px;
+    text-align:center;
+    color:var(--ink);
+    border:none;
+    border-bottom:3px solid var(--gold);
+    background:transparent;
+    padding:4px 8px;
+    width:80%;
+    outline:none;
+  }
+  .badge-caption{
+    font-size:13.5px;
+    line-height:1.6;
+    color:var(--ink);
+    margin-bottom:18px;
+  }
+  .medal-row{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .medal{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    width:70px;
+  }
+  .medal-icon{
+    width:46px;height:46px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,0.2), inset 0 -2px 4px rgba(0,0,0,0.15);
+    border:2.5px solid #fff;
+  }
+  .medal-label{
+    font-size:9.5px;
+    font-weight:800;
+    color:var(--sub);
+    text-align:center;
+    line-height:1.2;
+  }
+  .stat-row{
+    display:flex;
+    justify-content:space-around;
+    background:#F7F2E2;
+    border-radius:12px;
+    padding:12px 8px;
+    margin-bottom:14px;
+  }
+  .stat{
+    text-align:center;
+  }
+  .stat-num{
+    font-family:'Fredoka One',cursive;
+    font-size:18px;
+    color:var(--ink);
+  }
+  .stat-label{
+    font-size:9.5px;
+    font-weight:800;
+    color:var(--sub);
+    text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  .badge-date{
+    font-size:11.5px;
+    color:var(--sub);
+    font-style:italic;
+    margin-bottom:6px;
+  }
+  .badge-footnote{
+    font-size:10.5px;
+    color:var(--sub);
+    margin-top:10px;
+    border-top:1.5px dashed #E5DCC0;
+    padding-top:10px;
+  }
+
+  @media (max-width:480px){
+    .home-title{font-size:26px;}
+    #character{width:74px;}
+    .walkbtn{width:56px;height:56px;}
+  }
+</style>
+
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div class="screen active" id="home">
+    <svg class="home-hills" viewBox="0 0 400 140" preserveAspectRatio="none">
+      <path d="M0 140 L0 90 L80 40 L160 90 L240 30 L320 80 L400 50 L400 140 Z" fill="var(--hill-far)"/>
+      <path d="M0 140 L0 110 L100 65 L200 110 L300 55 L400 100 L400 140 Z" fill="var(--hill-mid)"/>
+      <path d="M0 140 L0 125 L120 95 L220 130 L320 90 L400 120 L400 140 Z" fill="var(--hill-near)"/>
+    </svg>
+    <div style="position:relative;z-index:2;">
+      <div class="home-eyebrow">Lessons 1&ndash;16</div>
+      <div class="home-title">The Machine Learning<br/>Trail</div>
+      <div class="home-sub">One journey. Four summits.</div>
+      <button class="startbtn" id="startBtn">Begin the Hike</button>
+    </div>
+  </div>
+
+  <!-- HIKE -->
+  <div class="screen" id="hike">
+    <div id="trailArea">
+      <svg class="hillsvg" viewBox="0 0 400 220" preserveAspectRatio="none" style="height:60%;">
+        <path d="M0 220 L0 150 L70 100 L150 160 L230 90 L300 150 L400 110 L400 220 Z" fill="var(--hill-far)" opacity="0.7"/>
+        <path d="M0 220 L0 175 L90 130 L180 180 L260 120 L340 170 L400 150 L400 220 Z" fill="var(--hill-mid)" opacity="0.8"/>
+      </svg>
+      <!-- trail segments, flags, and character are injected by JS -->
+      <div id="character"></div>
+    </div>
+
+    <div id="hud">
+      <button class="homebtn" id="homeBtn" aria-label="Home">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8" stroke="#2A2118" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v10h14V10" stroke="#2A2118" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div id="badges">
+        <div class="badge" id="badge0" style="background:var(--sup);"></div>
+        <div class="badge" id="badge1" style="background:var(--uns);"></div>
+        <div class="badge" id="badge2" style="background:var(--nlp);"></div>
+        <div class="badge" id="badge3" style="background:var(--cv);"></div>
+      </div>
+    </div>
+    <div id="progressWrap">
+      <div id="progressBarBg"><div id="progressBarFg"></div></div>
+      <div id="progressLabel">0%</div>
+    </div>
+
+    <div id="hintText">Use the arrows to hike the trail</div>
+    <div id="controls">
+      <button class="walkbtn" id="backBtn" aria-label="Walk back">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 4l-8 8 8 8" stroke="#2A2118" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="walkbtn" id="fwdBtn" aria-label="Walk forward">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M9 4l8 8-8 8" stroke="#2A2118" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHECKPOINT MODAL -->
+  <div id="modalOverlay">
+    <div class="modal-card">
+      <div class="modal-eyebrow" id="modalEyebrow">Checkpoint 1</div>
+      <div class="modal-title" id="modalTitle">Supervised Learning</div>
+      <p class="modal-explain" id="modalExplain"></p>
+      <div class="modal-prompt" id="modalPrompt"></div>
+      <textarea id="modalTextarea" placeholder="Type your answer here..."></textarea>
+      <div class="modal-warn" id="modalWarn">Write a sentence or two before continuing the hike.</div>
+      <button class="modal-savebtn" id="modalSaveBtn">Save &amp; Continue Hiking</button>
+    </div>
+  </div>
+
+  <!-- SUMMIT -->
+  <div id="summitOverlay">
+    <div class="summit-card">
+      <div style="font-size:40px;">&#127942;</div>
+      <div class="summit-title">Summit Reached!</div>
+      <div class="summit-sub">You completed Lessons 1&ndash;16</div>
+      <div id="journalList"></div>
+      <button class="claimbtn" id="claimBtn">Claim Your Trail Badge</button>
+      <button class="restartbtn" id="restartBtn">Hike Again</button>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENT BADGE (for fun) -->
+  <div id="achieveOverlay">
+    <div class="badge-card">
+      <div class="badge-seal">&#127942;</div>
+      <div class="badge-heading">Trail Master</div>
+      <div class="badge-subheading">Machine Learning Trail &middot; Lessons 1&ndash;16</div>
+      <div class="badge-name-row">
+        <div class="badge-name-label">Hiker's Name</div>
+        <input id="badgeNameInput" type="text" placeholder="Type your name" maxlength="28"/>
+      </div>
+      <div class="badge-caption">has successfully hiked every checkpoint and reached the summit of the Machine Learning Trail.</div>
+      <div class="medal-row" id="medalRow"></div>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-num">16</div><div class="stat-label">Lessons</div></div>
+        <div class="stat"><div class="stat-num">4/4</div><div class="stat-label">Checkpoints</div></div>
+        <div class="stat"><div class="stat-num">1</div><div class="stat-label">Summit</div></div>
+      </div>
+      <div class="badge-date" id="badgeDate"></div>
+      <button class="restartbtn" id="closeBadgeBtn">Nice!</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+
+  var topics = [
+    {
+      key:'sup', color:'#4F8EF7', name:'Supervised Learning',
+      explain:"Supervised learning trains on labeled examples to predict outcomes \u2014 the foundation of your very first models this course, from spam filters to real predictions.",
+      prompt:"What did you build or learn using supervised learning?"
+    },
+    {
+      key:'uns', color:'#9B7BF5', name:'Unsupervised Learning',
+      explain:"Unsupervised learning finds hidden patterns in unlabeled data, grouping similar things together or flagging what stands out as unusual.",
+      prompt:"What patterns or groupings did you discover using unsupervised learning?"
+    },
+    {
+      key:'nlp', color:'#FF9257', name:'NLP & LLM',
+      explain:"NLP and LLMs teach machines to understand and generate human language, powering everything from chatbots to translation.",
+      prompt:"What did you create or explore with NLP or language models?"
+    },
+    {
+      key:'cv', color:'#22C1B8', name:'Deep Learning & CV',
+      explain:"Deep learning and computer vision let machines see and recognize patterns in images, from medical scans to self-driving cars.",
+      prompt:"What did you build or learn using deep learning or computer vision?"
+    }
+  ];
+
+  var waypointFrac = [
+    {x:0.07, y:0.90},
+    {x:0.27, y:0.68},
+    {x:0.48, y:0.50},
+    {x:0.70, y:0.32},
+    {x:0.88, y:0.16},
+    {x:0.94, y:0.08}
+  ];
+  var breakpoints = [0, 22, 44, 66, 88, 100];
+
+  var progress = 0;
+  var completed = [false,false,false,false];
+  var answers = ["","","",""];
+  var moveTimer = null;
+  var movingDir = 0;
+  var wpPix = [];
+  var STEP = 0.9;
+
+  var trailArea = document.getElementById('trailArea');
+  var character = document.getElementById('character');
+  var charFlip = null;
+  var homeScreen = document.getElementById('home');
+  var hikeScreen = document.getElementById('hike');
+  var homeBtn = document.getElementById('homeBtn');
+  var startBtn = document.getElementById('startBtn');
+  var backBtn = document.getElementById('backBtn');
+  var fwdBtn = document.getElementById('fwdBtn');
+  var progressBarFg = document.getElementById('progressBarFg');
+  var progressLabel = document.getElementById('progressLabel');
+  var hintText = document.getElementById('hintText');
+  var modalOverlay = document.getElementById('modalOverlay');
+  var modalEyebrow = document.getElementById('modalEyebrow');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalExplain = document.getElementById('modalExplain');
+  var modalPrompt = document.getElementById('modalPrompt');
+  var modalTextarea = document.getElementById('modalTextarea');
+  var modalWarn = document.getElementById('modalWarn');
+  var modalSaveBtn = document.getElementById('modalSaveBtn');
+  var summitOverlay = document.getElementById('summitOverlay');
+  var journalList = document.getElementById('journalList');
+  var restartBtn = document.getElementById('restartBtn');
+  var claimBtn = document.getElementById('claimBtn');
+  var achieveOverlay = document.getElementById('achieveOverlay');
+  var medalRow = document.getElementById('medalRow');
+  var badgeDate = document.getElementById('badgeDate');
+  var badgeNameInput = document.getElementById('badgeNameInput');
+  var closeBadgeBtn = document.getElementById('closeBadgeBtn');
+  var badges = [document.getElementById('badge0'),document.getElementById('badge1'),document.getElementById('badge2'),document.getElementById('badge3')];
+  var activeCheckpointIndex = -1;
+  var hintTimeout = null;
+
+  function buildCharacterSVG(){
+    var html = '';
+    html += '<div id="charFlip" style="width:100%;">';
+    html += '<svg viewBox="0 0 88 130" width="100%" xmlns="http://www.w3.org/2000/svg">';
+    html += '<ellipse cx="44" cy="122" rx="24" ry="6" fill="rgba(0,0,0,0.15)"/>';
+    html += '<rect class="arm right" x="24" y="46" width="9" height="34" rx="4.5" fill="#F2A65A" transform="rotate(10 28 46)"/>';
+    html += '<rect class="arm left" x="55" y="46" width="9" height="34" rx="4.5" fill="#F2A65A" transform="rotate(-10 60 46)"/>';
+    html += '<rect x="18" y="40" width="22" height="30" rx="8" fill="#7A6A52"/>';
+    html += '<rect x="30" y="30" width="28" height="48" rx="12" fill="#3E6FA8"/>';
+    html += '<rect x="34" y="30" width="20" height="10" rx="4" fill="#2F5586"/>';
+    html += '<rect class="leg left" x="34" y="76" width="10" height="34" rx="5" fill="#2A2118"/>';
+    html += '<rect class="leg right" x="46" y="76" width="10" height="34" rx="5" fill="#2A2118"/>';
+    html += '<rect x="30" y="106" width="14" height="8" rx="3" fill="#5A4A38"/>';
+    html += '<rect x="46" y="106" width="14" height="8" rx="3" fill="#5A4A38"/>';
+    html += '<circle cx="44" cy="18" r="15" fill="#F2A65A"/>';
+    html += '<path d="M28 12c0-9 8-15 16-15s16 6 16 15c-6-3-12-4-16-4s-10 1-16 4z" fill="#8C5A32"/>';
+    html += '<rect x="26" y="8" width="36" height="7" rx="3.5" fill="#D9793F"/>';
+    html += '</svg>';
+    html += '</div>';
+    character.innerHTML = html;
+    charFlip = document.getElementById('charFlip');
+  }
+
+  function buildTrail(){
+    var oldSegs = trailArea.querySelectorAll('.trail-segment, .flag, .summit-flag');
+    for (var i=0;i<oldSegs.length;i++){ oldSegs[i].parentNode.removeChild(oldSegs[i]); }
+
+    var rect = trailArea.getBoundingClientRect();
+    var w = rect.width;
+    var h = rect.height;
+    wpPix = [];
+    for (var i=0;i<waypointFrac.length;i++){
+      wpPix.push({ x: waypointFrac[i].x * w, y: waypointFrac[i].y * h });
+    }
+
+    for (var s=0; s<wpPix.length-1; s++){
+      var p1 = wpPix[s];
+      var p2 = wpPix[s+1];
+      var dx = p2.x - p1.x;
+      var dy = p2.y - p1.y;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      var seg = document.createElement('div');
+      seg.className = 'trail-segment';
+      seg.style.left = p1.x + 'px';
+      seg.style.top = p1.y + 'px';
+      seg.style.width = dist + 'px';
+      seg.style.transform = 'rotate(' + angle + 'deg)';
+      seg.style.transformOrigin = '0 50%';
+      trailArea.appendChild(seg);
+    }
+
+    for (var f=0; f<4; f++){
+      var wp = wpPix[f+1];
+      var flag = document.createElement('div');
+      flag.className = 'flag';
+      flag.id = 'flagEl' + f;
+      flag.style.left = wp.x + 'px';
+      flag.style.top = wp.y + 'px';
+      flag.innerHTML = '<div class="flag-pole"></div><div class="flag-flame" style="background:' + topics[f].color + ';">' + (f+1) + '</div>';
+      (function(idx, el){
+        el.addEventListener('click', function(){
+          if (completed[idx]){ openCheckpointModal(idx, true); }
+        });
+      })(f, flag);
+      trailArea.appendChild(flag);
+    }
+
+    var summitWp = wpPix[5];
+    var summitFlag = document.createElement('div');
+    summitFlag.className = 'summit-flag';
+    summitFlag.innerHTML = '<svg width="46" height="60" viewBox="0 0 46 60"><rect x="21" y="0" width="4" height="60" fill="#7A6A52"/><path d="M25 4 L44 12 L25 20 Z" fill="#FFC94A"/></svg>';
+    summitFlag.style.left = summitWp.x + 'px';
+    summitFlag.style.top = summitWp.y + 'px';
+    trailArea.appendChild(summitFlag);
+
+    trailArea.appendChild(character);
+    updateFlagStates();
+    updateCharacterPosition();
+  }
+
+  function updateFlagStates(){
+    for (var i=0;i<4;i++){
+      var el = document.getElementById('flagEl' + i);
+      if (!el) continue;
+      el.className = 'flag' + (completed[i] ? ' done' : (i>0 && !completed[i-1] ? ' locked' : ''));
+      badges[i].className = 'badge' + (completed[i] ? ' done' : '');
+    }
+  }
+
+  function getSegmentIndex(p){
+    for (var i=0;i<breakpoints.length-1;i++){
+      if (p <= breakpoints[i+1]) return i;
+    }
+    return breakpoints.length-2;
+  }
+
+  function updateCharacterPosition(){
+    if (wpPix.length < 2) return;
+    var segIdx = getSegmentIndex(progress);
+    var segStart = breakpoints[segIdx];
+    var segEnd = breakpoints[segIdx+1];
+    var t = (segEnd - segStart) > 0 ? (progress - segStart) / (segEnd - segStart) : 0;
+    var p1 = wpPix[segIdx];
+    var p2 = wpPix[segIdx+1];
+    var x = p1.x + (p2.x - p1.x) * t;
+    var y = p1.y + (p2.y - p1.y) * t;
+    character.style.left = x + 'px';
+    character.style.top = y + 'px';
+    progressBarFg.style.width = progress + '%';
+    progressLabel.textContent = Math.round(progress) + '%';
+  }
+
+  function maxAllowedProgress(){
+    for (var i=0;i<4;i++){
+      if (!completed[i]) return breakpoints[i+1];
+    }
+    return 100;
+  }
+
+  function showHint(){
+    hintText.className = 'show';
+    clearTimeout(hintTimeout);
+    hintTimeout = setTimeout(function(){ hintText.className = ''; }, 3200);
+  }
+
+  function stopMoving(){
+    if (moveTimer){ clearInterval(moveTimer); moveTimer = null; }
+    character.className = character.className.replace(' walking','');
+  }
+
+  function startMoving(dir){
+    stopMoving();
+    movingDir = dir;
+    character.className += ' walking';
+    if (charFlip){
+      charFlip.style.transform = dir < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+    }
+    tick();
+    moveTimer = setInterval(tick, 40);
+  }
+
+  function tick(){
+    var maxP = maxAllowedProgress();
+    if (movingDir > 0){
+      if (progress >= maxP){
+        stopMoving();
+        maybeOpenCheckpoint();
+        return;
+      }
+      progress = Math.min(progress + STEP, maxP);
+    } else if (movingDir < 0){
+      progress = Math.max(progress - STEP, 0);
+    }
+    updateCharacterPosition();
+    if (movingDir > 0 && progress >= maxP - 0.01){
+      stopMoving();
+      maybeOpenCheckpoint();
+    }
+  }
+
+  function maybeOpenCheckpoint(){
+    for (var i=0;i<4;i++){
+      if (!completed[i] && progress >= breakpoints[i+1] - 0.05){
+        openCheckpointModal(i, false);
+        return;
+      }
+    }
+    if (progress >= 99.9 && completed[3]){
+      openSummit();
+    }
+  }
+
+  function openCheckpointModal(idx, isReview){
+    activeCheckpointIndex = idx;
+    var t = topics[idx];
+    modalEyebrow.style.background = t.color;
+    modalEyebrow.textContent = 'Checkpoint ' + (idx+1);
+    modalTitle.textContent = t.name;
+    modalExplain.textContent = t.explain;
+    modalPrompt.textContent = t.prompt;
+    modalTextarea.value = answers[idx] || '';
+    modalWarn.className = 'modal-warn';
+    modalSaveBtn.textContent = isReview ? 'Save Changes' : 'Save & Continue Hiking';
+    modalOverlay.className = 'show';
+    setTimeout(function(){ modalTextarea.focus(); }, 200);
+  }
+
+  function closeModal(){
+    modalOverlay.className = '';
+  }
+
+  modalSaveBtn.addEventListener('click', function(){
+    var val = modalTextarea.value.replace(/^\s+|\s+$/g,'');
+    if (val.length < 2){
+      modalWarn.className = 'modal-warn show';
+      return;
+    }
+    answers[activeCheckpointIndex] = val;
+    completed[activeCheckpointIndex] = true;
+    updateFlagStates();
+    closeModal();
+    showHint();
+  });
+
+  function openSummit(){
+    var html = '';
+    for (var i=0;i<4;i++){
+      html += '<div class="journal-item" style="border-left-color:' + topics[i].color + ';">';
+      html += '<div class="journal-topic" style="color:' + topics[i].color + ';">' + topics[i].name + '</div>';
+      html += '<div class="journal-answer">' + escapeHtml(answers[i]) + '</div>';
+      html += '</div>';
+    }
+    journalList.innerHTML = html;
+    summitOverlay.className = 'show';
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function buildMedals(){
+    var html = '';
+    for (var i=0;i<4;i++){
+      html += '<div class="medal">';
+      html += '<div class="medal-icon" style="background:' + topics[i].color + ';">';
+      html += '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17.3 6.5 21 8 13.5 3 9l6.5-0.5L12 2z" fill="#fff"/></svg>';
+      html += '</div>';
+      html += '<div class="medal-label">' + topics[i].name + '</div>';
+      html += '</div>';
+    }
+    medalRow.innerHTML = html;
+  }
+
+  function launchConfetti(){
+    var old = document.querySelectorAll('.confetti-piece');
+    for (var i=0;i<old.length;i++){ old[i].parentNode.removeChild(old[i]); }
+    var colors = ['#4F8EF7','#9B7BF5','#FF9257','#22C1B8','#FFC94A','#4C9A5B'];
+    var appEl = document.getElementById('app');
+    for (var c=0; c<26; c++){
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = (Math.random()*100) + '%';
+      piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.animationDuration = (2 + Math.random()*1.6) + 's';
+      piece.style.animationDelay = (Math.random()*0.6) + 's';
+      appEl.appendChild(piece);
+      (function(el){
+        setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 4200);
+      })(piece);
+    }
+  }
+
+  function openAchievement(){
+    buildMedals();
+    var today = new Date();
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    badgeDate.textContent = months[today.getMonth()] + ' ' + today.getDate() + ', ' + today.getFullYear();
+    if (!badgeNameInput.value){ badgeNameInput.value = ''; }
+    achieveOverlay.className = 'show';
+    launchConfetti();
+  }
+
+  claimBtn.addEventListener('click', function(){
+    openAchievement();
+  });
+  closeBadgeBtn.addEventListener('click', function(){
+    achieveOverlay.className = '';
+  });
+
+  function resetAll(){
+    progress = 0;
+    completed = [false,false,false,false];
+    answers = ["","","",""];
+    updateFlagStates();
+    updateCharacterPosition();
+    summitOverlay.className = '';
+    achieveOverlay.className = '';
+  }
+
+  startBtn.addEventListener('click', function(){
+    homeScreen.className = 'screen';
+    hikeScreen.className = 'screen active';
+    setTimeout(function(){
+      buildTrail();
+      showHint();
+    }, 60);
+  });
+
+  homeBtn.addEventListener('click', function(){
+    hikeScreen.className = 'screen';
+    homeScreen.className = 'screen active';
+    stopMoving();
+  });
+
+  restartBtn.addEventListener('click', function(){
+    resetAll();
+  });
+
+  function bindWalk(btn, dir){
+    var down = false;
+    function start(e){
+      if (e) e.preventDefault();
+      if (down) return;
+      down = true;
+      startMoving(dir);
+    }
+    function end(){
+      if (!down) return;
+      down = false;
+      stopMoving();
+    }
+    btn.addEventListener('mousedown', start);
+    btn.addEventListener('touchstart', start, {passive:false});
+    btn.addEventListener('mouseup', end);
+    btn.addEventListener('mouseleave', end);
+    btn.addEventListener('touchend', end);
+    btn.addEventListener('touchcancel', end);
+  }
+  bindWalk(fwdBtn, 1);
+  bindWalk(backBtn, -1);
+
+  document.addEventListener('keydown', function(e){
+    if (hikeScreen.className.indexOf('active') === -1) return;
+    if (modalOverlay.className.indexOf('show') !== -1) return;
+    if (e.key === 'ArrowRight'){ if (movingDir !== 1) startMoving(1); }
+    if (e.key === 'ArrowLeft'){ if (movingDir !== -1) startMoving(-1); }
+  });
+  document.addEventListener('keyup', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){ stopMoving(); }
+  });
+
+  window.addEventListener('resize', function(){
+    if (hikeScreen.className.indexOf('active') !== -1){
+      buildTrail();
+    }
+  });
+
+  buildCharacterSVG();
+})();
+</script>
+</body>
+</html>
